@@ -1,10 +1,9 @@
 import requests
 import pandas as pd
-import psycopg2 as pg 
 
-def extractMembers(token,key,organization,engine):
+def extract_members(token,key,organization,engine):
   print('------------------------------------------')
-  print('extractMembers -> Inicio da leitura da URL')
+  print('extract_members -> Inicio da leitura da URL')
   url = 'https://api.trello.com/1/organizations/{}/members?key={}&token={}'.format(organization, key, token)
   # Recupera as informações da url
   response = requests.get(url)
@@ -26,7 +25,7 @@ def extractMembers(token,key,organization,engine):
   )
 
   # Insere os dados na tabela
-  print('extractMembers -> Inserção dos dados')
+  print('extract_members -> Inserção dos dados')
   for item in data:
     # Neste exemplo, a subconsulta SELECT 1 FROM members WHERE id = %s 
     # verifica se já existe um registro com o mesmo id na tabela "members". 
@@ -46,4 +45,4 @@ def extractMembers(token,key,organization,engine):
 
   # Fecha o cursor e a conexão com o banco de dados
   cursor.close()
-  print('extractMembers -> Extração concluída com sucesso!')
+  print('extract_members -> Extração concluída com sucesso!')

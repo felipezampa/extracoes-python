@@ -1,20 +1,14 @@
 import requests
-import pandas as pd
-import psycopg2 as pg 
 
-# Variaveis de conexao
- # --> conexão com banco
-
-def extractBoards(token,key,organization,engine):
+def extract_boards(token,key,organization,engine):
   print('------------------------------------------')
-  print('extractBoards -> Inicio da leitura da URL')
+  print('extract_boards -> Inicio da leitura da URL')
   url = 'https://api.trello.com/1/organizations/{}/boards?key={}&token={}'.format(organization, key, token)
 
   # Recupera as informações da url
   response = requests.get(url)
   # Converte a resposta para um objeto JSON
   data = response.json()  
-  df = pd.json_normalize(data)
   # Cria um cursor para executar as consultas SQL
   cursor = engine.cursor()
 
@@ -29,7 +23,7 @@ def extractBoards(token,key,organization,engine):
       );
   ''')
   # Insere os dados na tabela
-  print('extractBoards -> Inserção dos dados')
+  print('extract_boards -> Inserção dos dados')
   for item in data:
     # Neste exemplo, a subconsulta SELECT 1 FROM boards WHERE id = %s 
     # verifica se já existe um registro com o mesmo id na tabela "boards". 
@@ -48,18 +42,17 @@ def extractBoards(token,key,organization,engine):
   # Confirma as alterações no banco de dados
   engine.commit()
   cursor.close()
-  print('extractBoards -> Extração concluída com sucesso!')
+  print('extract_boards -> Extração concluída com sucesso!')
 
-def extractMembersBoards(token,key,organization,engine):
+def extract_members_boards(token,key,organization,engine):
   print('------------------------------------------')
-  print('extractMembersBoards -> Inicio da leitura da URL')
+  print('extract_members_boards -> Inicio da leitura da URL')
   url = 'https://api.trello.com/1/organizations/{}/boards?key={}&token={}'.format(organization, key, token)
 
   # Recupera as informações da url
   response = requests.get(url)
   # Converte a resposta para um objeto JSON
   data = response.json()  
-  df = pd.json_normalize(data)
   # Cria um cursor para executar as consultas SQL
   cursor = engine.cursor()
 
@@ -73,7 +66,7 @@ def extractMembersBoards(token,key,organization,engine):
       );
   ''')
   # Insere os dados na tabela
-  print('extractMembersBoards -> Inserção dos dados')
+  print('extract_members_boards -> Inserção dos dados')
   for item in data:
     # Neste exemplo, a subconsulta SELECT 1 FROM boards WHERE id = %s 
     # verifica se já existe um registro com o mesmo id na tabela "boards". 
@@ -92,5 +85,14 @@ def extractMembersBoards(token,key,organization,engine):
   # Confirma as alterações no banco de dados
   engine.commit()
   cursor.close()
-  print('extractMembersBoards -> Extração concluída com sucesso!')
+  print('extract_members_boards -> Extração concluída com sucesso!')
     
+def get_all_boards(engine):
+  cursor = engine.cursor()
+  cursor.execute('SELECT id FROM boards')
+  # A função fetchall() é usada para recuperar todas as linhas retornadas pela consulta
+  results = cursor.fetchall()
+  idBoards = [row[0] for row in results]
+  cursor.close()
+
+  return idBoards 
