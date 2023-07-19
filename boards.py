@@ -44,9 +44,9 @@ def extract_boards(token,key,organization,engine):
   cursor.close()
   print('extract_boards -> Extração concluída com sucesso!')
 
-def extract_members_boards(token,key,organization,engine):
+def extract_boards_members(token,key,organization,engine):
   print('------------------------------------------')
-  print('extract_members_boards -> Inicio da leitura da URL')
+  print('extract_boards_members -> Inicio da leitura da URL')
   url = 'https://api.trello.com/1/organizations/{}/boards?key={}&token={}'.format(organization, key, token)
 
   # Recupera as informações da url
@@ -58,34 +58,39 @@ def extract_members_boards(token,key,organization,engine):
 
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
-      CREATE TABLE IF NOT EXISTS public.boards (
+      CREATE TABLE IF NOT EXISTS public.boards_members (
         id text NULL,
         id_board text NULL,
         id_membro text NULL,
-        tipo_membro text NULL
+        tipo_membro text NULL,
+        inativo text NULL
       );
   ''')
   # Insere os dados na tabela
-  print('extract_members_boards -> Inserção dos dados')
+  print('extract_boards_members -> Inserção dos dados')
   for item in data:
-    # Neste exemplo, a subconsulta SELECT 1 FROM boards WHERE id = %s 
-    # verifica se já existe um registro com o mesmo id na tabela "boards". 
-    # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
-    cursor.execute(
-      '''
-          INSERT INTO boards (id, id_board, id_membro, tipo_membro)
-          SELECT %s, %s, %s, %s
-          WHERE NOT EXISTS (
-              SELECT 1 FROM boards WHERE id = %s
-          )
-      ''', 
-      (item['memberships.id'], item['id'], item['memberships.idMember'], item['memberships.memberType'], item['memberships.id'])
-    )
+    memberships = item['memberships']
+
+    for member in memberships:  
+      # Neste exemplo, a subconsulta SELECT 1 FROM boards_members WHERE id = %s 
+      # verifica se já existe um registro com o mesmo id na tabela "boards_members". 
+      # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
+      cursor.execute(
+        '''
+            INSERT INTO boards_members (id, id_board, id_membro, tipo_membro, inativo)
+            SELECT %s, %s, %s, %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM boards_members WHERE id = %s
+            )
+        ''', 
+        (member['id'], item['id'], member['idMember'], member['memberType'], member['deactivated'], 
+         member['id'])
+      )
 
   # Confirma as alterações no banco de dados
   engine.commit()
   cursor.close()
-  print('extract_members_boards -> Extração concluída com sucesso!')
+  print('extract_boards_members -> Extração concluída com sucesso!')
     
 def get_all_boards(engine):
   cursor = engine.cursor()

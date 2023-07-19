@@ -51,10 +51,98 @@ def extract_cards(token,key,engine,idBoards):
   cursor.close()
   print('extract_cards -> Extração concluída com sucesso!')
 
-def extract_cards_labels():
-  print('fazer N - N para ter os cards e labels')
+def extract_cards_labels(token,key,engine,idBoards):
+  print('------------------------------------------')
+  print('extract_cards_labels -> Inicio da leitura da URL')
+  cursor = engine.cursor()
 
-def extract_cards_checklists():
-  print('fazer N - N para ter os cards e labels')
+  # Cria a tabela se ela ainda não existir
+  cursor.execute('''
+      CREATE TABLE IF NOT EXISTS public.cards_labels (
+        id_board text NULL,
+        id_card text NULL,
+        id_label text NULL
+      );
+  ''')
+  # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
+  for index, id in enumerate(idBoards):
+    url = 'https://api.trello.com/1/boards/{}/cards?key={}&token={}'.format(id, key, token)
 
+    # Recupera as informações da url
+    response = requests.get(url)
+    # Converte a resposta para um objeto JSON
+    data = response.json() 
+    # Cria um cursor para executar as consultas SQL
+    
+    # Insere os dados na tabela
+    print('extract_cards_labels -> idBoard: ' + str(index) + ' - Inserção dos dados')
+    for item in data:
+      labels = item['idLabels']
 
+      for label in labels:        
+        # Neste exemplo, a subconsulta SELECT 1 FROM cards_labels WHERE id = %s 
+        # verifica se já existe um registro com o mesmo id na tabela "cards_labels". 
+        # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
+        cursor.execute(
+          '''
+              INSERT INTO cards_labels (id_board, id_card, id_label)
+              SELECT %s, %s, %s
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM cards_labels WHERE id_board = %s AND id_card = %s AND id_label = %s 
+              )
+          ''', 
+          (str(id), item['id'], label, str(id), item['id'], label)
+        )
+
+  # Confirma as alterações no banco de dados e fecha o cursor
+  engine.commit()
+  cursor.close()
+  print('extract_cards_labels -> Extração concluída com sucesso!')
+
+def extract_cards_checklists(token,key,engine,idBoards):
+  print('------------------------------------------')
+  print('extract_cards_checklists -> Inicio da leitura da URL')
+  cursor = engine.cursor()
+
+  # Cria a tabela se ela ainda não existir
+  cursor.execute('''
+      CREATE TABLE IF NOT EXISTS public.cards_checklists (
+        id_board text NULL,
+        id_card text NULL,
+        id_checklist text NULL
+      );
+  ''')
+  # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
+  for index, id in enumerate(idBoards):
+    url = 'https://api.trello.com/1/boards/{}/cards?key={}&token={}'.format(id, key, token)
+
+    # Recupera as informações da url
+    response = requests.get(url)
+    # Converte a resposta para um objeto JSON
+    data = response.json() 
+    # Cria um cursor para executar as consultas SQL
+    
+    # Insere os dados na tabela
+    print('extract_cards_checklists -> idBoard: ' + str(index) + ' - Inserção dos dados')
+    for item in data:
+      checklists = item['idChecklists']
+
+      for check in checklists:        
+        # Neste exemplo, a subconsulta SELECT 1 FROM cards_checklists WHERE id = %s 
+        # verifica se já existe um registro com o mesmo id na tabela "cards_checklists". 
+        # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
+        cursor.execute(
+          '''
+              INSERT INTO cards_checklists (id_board, id_card, id_checklist)
+              SELECT %s, %s, %s
+              WHERE NOT EXISTS (
+                  SELECT 1 FROM cards_checklists WHERE id_board = %s AND id_card = %s AND id_checklist = %s 
+              )
+          ''', 
+          (str(id), item['id'], check, str(id), item['id'], check)
+        )
+
+  # Confirma as alterações no banco de dados e fecha o cursor
+  engine.commit()
+  cursor.close()
+  print('extract_cards_checklists -> Extração concluída com sucesso!')
