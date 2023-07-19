@@ -8,10 +8,10 @@ def extract_lists(token,key,engine,idBoards):
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
       CREATE TABLE IF NOT EXISTS public.lists (
-        id text NULL,
-        nome text NULL,
-        fechado text NULL,
-        id_board text NULL
+        id text,
+        nome text,
+        fechado boolean,
+        id_board text
       );
   ''')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array

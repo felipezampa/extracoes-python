@@ -17,9 +17,9 @@ def extract_members(token,key,organization,engine):
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
       CREATE TABLE IF NOT EXISTS public.members (
-          id text NULL,
-          nome text NULL,
-          username text NULL
+          id text,
+          nome text,
+          username text
       );
     '''
   )

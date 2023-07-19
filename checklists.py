@@ -8,10 +8,10 @@ def extract_checklists(token,key,engine,idBoards):
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
       CREATE TABLE IF NOT EXISTS public.checklists (
-        id text NULL,
-        nome text NULL,
-        id_board text NULL,
-        id_card text NULL
+        id text,
+        nome text,
+        id_board text,
+        id_card text
       );
   ''')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
@@ -54,12 +54,12 @@ def extract_checklists_items(token,key,engine,idBoards):
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
       CREATE TABLE IF NOT EXISTS public.checklists_items (
-        id text NULL,
-        nome text NULL,
-        estado text NULL,
-        dt_entrega text NULL,
-        id_membro text NULL, 
-        id_checklist text NULL
+        id text,
+        nome text,
+        estado text,
+        dt_entrega timestamp,
+        id_membro text, 
+        id_checklist text
       );
   ''')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array

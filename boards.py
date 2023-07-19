@@ -15,11 +15,11 @@ def extract_boards(token,key,organization,engine):
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
       CREATE TABLE IF NOT EXISTS public.boards (
-        id text NULL,
-        nome text NULL,
-        fechado text NULL,
-        data_fechamento text NULL,
-        id_criador text NULL
+        id text,
+        nome text,
+        fechado boolean,
+        data_fechamento date,
+        id_criador text
       );
   ''')
   # Insere os dados na tabela
@@ -59,11 +59,11 @@ def extract_boards_members(token,key,organization,engine):
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
       CREATE TABLE IF NOT EXISTS public.boards_members (
-        id text NULL,
-        id_board text NULL,
-        id_membro text NULL,
-        tipo_membro text NULL,
-        inativo text NULL
+        id text,
+        id_board text,
+        id_membro text,
+        tipo_membro text,
+        inativo boolean
       );
   ''')
   # Insere os dados na tabela

@@ -8,11 +8,11 @@ def extract_labels(token,key,engine,idBoards):
   # Cria a tabela se ela ainda não existir
   cursor.execute('''
       CREATE TABLE IF NOT EXISTS public.labels (
-        id_board text NULL,
-        id text NULL,
-        nome text NULL,
-        cor text NULL,
-        quantidade_utilizada text NULL
+        id_board text,
+        id text,
+        nome text,
+        cor text,
+        quantidade_utilizada INTEGER
       );
   ''')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
