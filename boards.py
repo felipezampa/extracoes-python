@@ -22,6 +22,7 @@ def extract_boards(token,key,organization,engine):
         id_criador text
       );
   ''')
+  cursor.execute('TRUNCATE TABLE boards')
   # Insere os dados na tabela
   print('extract_boards -> Inserção dos dados')
   for item in data:
@@ -31,12 +32,9 @@ def extract_boards(token,key,organization,engine):
     cursor.execute(
       '''
           INSERT INTO boards (id, nome, fechado, data_fechamento, id_criador)
-          SELECT %s, %s, %s, %s, %s
-          WHERE NOT EXISTS (
-              SELECT 1 FROM boards WHERE id = %s
-          )
+          VALUES (%s, %s, %s, %s, %s)
       ''', 
-      (item['id'], item['name'], item['closed'], item['dateClosed'], item['idMemberCreator'], item['id'])
+      (item['id'], item['name'], item['closed'], item['dateClosed'], item['idMemberCreator'])
     )
 
   # Confirma as alterações no banco de dados
@@ -68,23 +66,17 @@ def extract_boards_members(token,key,organization,engine):
   ''')
   # Insere os dados na tabela
   print('extract_boards_members -> Inserção dos dados')
+  cursor.execute('TRUNCATE TABLE boards_members')
   for item in data:
     memberships = item['memberships']
 
-    for member in memberships:  
-      # Neste exemplo, a subconsulta SELECT 1 FROM boards_members WHERE id = %s 
-      # verifica se já existe um registro com o mesmo id na tabela "boards_members". 
-      # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
+    for member in memberships: 
       cursor.execute(
         '''
             INSERT INTO boards_members (id, id_board, id_membro, tipo_membro, inativo)
-            SELECT %s, %s, %s, %s, %s
-            WHERE NOT EXISTS (
-                SELECT 1 FROM boards_members WHERE id = %s
-            )
+            VALUES (%s, %s, %s, %s, %s)
         ''', 
-        (member['id'], item['id'], member['idMember'], member['memberType'], member['deactivated'], 
-         member['id'])
+        (member['id'], item['id'], member['idMember'], member['memberType'], member['deactivated'])
       )
 
   # Confirma as alterações no banco de dados

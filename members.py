@@ -26,18 +26,13 @@ def extract_members(token,key,organization,engine):
 
   # Insere os dados na tabela
   print('extract_members -> Inserção dos dados')
+  cursor.execute('TRUNCATE TABLE members')
   for item in data:
-    # Neste exemplo, a subconsulta SELECT 1 FROM members WHERE id = %s 
-    # verifica se já existe um registro com o mesmo id na tabela "members". 
-    # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
     cursor.execute('''
         INSERT INTO members (id, nome, username)
-        SELECT %s, %s, %s
-        WHERE NOT EXISTS (
-            SELECT 1 FROM members WHERE id = %s
-        )
+        VALUES( %s, %s, %s )
       ''',
-      (item['id'], item['fullName'], item['username'], item['id'])
+      (item['id'], item['fullName'], item['username'])
     )
 
   # Confirma as alterações no banco de dados

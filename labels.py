@@ -15,6 +15,7 @@ def extract_labels(token,key,engine,idBoards):
         quantidade_utilizada INTEGER
       );
   ''')
+  cursor.execute('TRUNCATE TABLE labels')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
   for index, id in enumerate(idBoards):
     url = 'https://api.trello.com/1/boards/{}/labels?key={}&token={}'.format(id, key, token)
@@ -28,18 +29,12 @@ def extract_labels(token,key,engine,idBoards):
     # Insere os dados na tabela
     print('extract_labels -> idBoard: ' + str(index) + ' - Inserção dos dados')
     for item in data:
-      # Neste exemplo, a subconsulta SELECT 1 FROM labels WHERE id = %s 
-      # verifica se já existe um registro com o mesmo id na tabela "labels". 
-      # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
       cursor.execute(
         '''
             INSERT INTO labels (id_board, id, nome, cor, quantidade_utilizada)
-            SELECT %s, %s, %s, %s, %s
-            WHERE NOT EXISTS (
-                SELECT 1 FROM labels WHERE id = %s
-            )
+            VALUES (%s, %s, %s, %s, %s)
         ''', 
-        (item['idBoard'], item['id'], item['name'], item['color'], item['uses'], item['id'])
+        (item['idBoard'], item['id'], item['name'], item['color'], item['uses'])
       )
 
   # Confirma as alterações no banco de dados e fecha o cursor

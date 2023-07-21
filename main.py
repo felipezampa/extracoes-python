@@ -5,15 +5,15 @@ import datetime
 import members, labels, boards, lists, cards, checklists
 
 
-# Initial time of the program
+# Tempo do inicio da execução
 start_time = datetime.datetime.now()
-# Load environment variables from the .env file
+# Carrega as variaveis de ambiente do arquivo .env
 load_dotenv()
-# Assign the values to variables
+# Atribui os valores do .env a variaveis locais
 token = os.getenv("token")
 key = os.getenv("key")
 organization = os.getenv("organization")
-# Connect in the database
+# Conecta no postgres
 engine = pg.connect(
     dbname=os.getenv("dbname"), user=os.getenv("user"), host=os.getenv("host"), port=os.getenv("port"), password=os.getenv("password")
 )
@@ -38,9 +38,9 @@ except Exception as e:
 finally:
   print('-----------------  FIM  ------------------')
   engine.close()
-# End time of the program
+# Tempo do fim da execução
 end_time = datetime.datetime.now()
-# Calculate the time of the execution
+# Calcula o tempo de execução
 execution_time = end_time - start_time
 
 print(f"Tempo de execução: {execution_time}")

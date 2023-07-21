@@ -18,6 +18,7 @@ def extract_cards(token,key,engine,idBoards):
         id_list text
       );
   ''')
+  cursor.execute('TRUNCATE TABLE cards')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
   for index, id in enumerate(idBoards):
     url = 'https://api.trello.com/1/boards/{}/cards?key={}&token={}'.format(id, key, token)
@@ -31,18 +32,12 @@ def extract_cards(token,key,engine,idBoards):
     # Insere os dados na tabela
     print('extract_cards -> idBoard: ' + str(index) + ' - Inserção dos dados')
     for item in data:
-      # Neste exemplo, a subconsulta SELECT 1 FROM cards WHERE id = %s 
-      # verifica se já existe um registro com o mesmo id na tabela "cards". 
-      # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
       cursor.execute(
         '''
             INSERT INTO cards (id, nome, descricao, dt_inicio, dt_entrega, terminado, id_board, id_list)
-            SELECT %s, %s, %s, %s, %s, %s, %s, %s
-            WHERE NOT EXISTS (
-                SELECT 1 FROM cards WHERE id = %s
-            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ''', 
-        (item['id'], item['name'], item['desc'], item['start'], item['due'], item['dueComplete'], item['idBoard'], item['idList'], item['id'])
+        (item['id'], item['name'], item['desc'], item['start'], item['due'], item['dueComplete'], item['idBoard'], item['idList'])
       )
 
   # Confirma as alterações no banco de dados e fecha o cursor
@@ -63,6 +58,7 @@ def extract_cards_labels(token,key,engine,idBoards):
         id_label text
       );
   ''')
+  cursor.execute('TRUNCATE TABLE cards_labels')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
   for index, id in enumerate(idBoards):
     url = 'https://api.trello.com/1/boards/{}/cards?key={}&token={}'.format(id, key, token)
@@ -85,12 +81,9 @@ def extract_cards_labels(token,key,engine,idBoards):
         cursor.execute(
           '''
               INSERT INTO cards_labels (id_board, id_card, id_label)
-              SELECT %s, %s, %s
-              WHERE NOT EXISTS (
-                  SELECT 1 FROM cards_labels WHERE id_board = %s AND id_card = %s AND id_label = %s 
-              )
+              VALUES (%s, %s, %s)
           ''', 
-          (str(id), item['id'], label, str(id), item['id'], label)
+          (str(id), item['id'], label)
         )
 
   # Confirma as alterações no banco de dados e fecha o cursor
@@ -111,6 +104,7 @@ def extract_cards_checklists(token,key,engine,idBoards):
         id_checklist text
       );
   ''')
+  cursor.execute('TRUNCATE TABLE cards_checklists')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
   for index, id in enumerate(idBoards):
     url = 'https://api.trello.com/1/boards/{}/cards?key={}&token={}'.format(id, key, token)
@@ -133,12 +127,9 @@ def extract_cards_checklists(token,key,engine,idBoards):
         cursor.execute(
           '''
               INSERT INTO cards_checklists (id_board, id_card, id_checklist)
-              SELECT %s, %s, %s
-              WHERE NOT EXISTS (
-                  SELECT 1 FROM cards_checklists WHERE id_board = %s AND id_card = %s AND id_checklist = %s 
-              )
+              VALUES (%s, %s, %s)
           ''', 
-          (str(id), item['id'], check, str(id), item['id'], check)
+          (str(id), item['id'], check)
         )
 
   # Confirma as alterações no banco de dados e fecha o cursor

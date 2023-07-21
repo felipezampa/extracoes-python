@@ -14,6 +14,7 @@ def extract_checklists(token,key,engine,idBoards):
         id_card text
       );
   ''')
+  cursor.execute('TRUNCATE TABLE checklists')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
   for index, id in enumerate(idBoards):
     url = 'https://api.trello.com/1/boards/{}/checklists?key={}&token={}'.format(id, key, token)
@@ -27,18 +28,12 @@ def extract_checklists(token,key,engine,idBoards):
     # Insere os dados na tabela
     print('extract_checklists -> idBoard: ' + str(index) + ' - Inserção dos dados')
     for item in data:
-      # Neste exemplo, a subconsulta SELECT 1 FROM checklists WHERE id = %s 
-      # verifica se já existe um registro com o mesmo id na tabela "checklists". 
-      # A cláusula WHERE NOT EXISTS impede a inserção dos dados se o registro já existir. evitando dados duplicados
       cursor.execute(
         '''
             INSERT INTO checklists (id, nome, id_board, id_card)
-            SELECT %s, %s, %s, %s
-            WHERE NOT EXISTS (
-                SELECT 1 FROM checklists WHERE id = %s
-            )
+            VALUES (%s, %s, %s, %s)
         ''', 
-        (item['id'], item['name'], item['idBoard'], item['idCard'], item['id'])
+        (item['id'], item['name'], item['idBoard'], item['idCard'])
       )
 
   # Confirma as alterações no banco de dados e fecha o cursor
@@ -62,6 +57,7 @@ def extract_checklists_items(token,key,engine,idBoards):
         id_checklist text
       );
   ''')
+  cursor.execute('TRUNCATE TABLE checklists_items')
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
   for index, id in enumerate(idBoards):
     url = 'https://api.trello.com/1/boards/{}/checklists?key={}&token={}'.format(id, key, token)
@@ -84,12 +80,9 @@ def extract_checklists_items(token,key,engine,idBoards):
         cursor.execute(
           '''
               INSERT INTO checklists_items (id, nome, estado, dt_entrega, id_membro, id_checklist)
-              SELECT %s, %s, %s, %s, %s, %s
-              WHERE NOT EXISTS (
-                  SELECT 1 FROM checklists_items WHERE id = %s
-              )
+              VALUES ( %s, %s, %s, %s, %s, %s)
           ''', 
-          (item['id'], item['name'], item['state'], item['due'], item['idMember'], item['idChecklist'], item['id'])
+          (item['id'], item['name'], item['state'], item['due'], item['idMember'], item['idChecklist'])
         )
 
   # Confirma as alterações no banco de dados e fecha o cursor
