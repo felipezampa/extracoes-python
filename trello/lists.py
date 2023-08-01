@@ -27,7 +27,6 @@ def extract_lists(token,key,engine,idBoards):
     
     # Insere os dados na tabela
     print('extract_lists -> idBoard: ' + str(index) + ' - Inserção dos dados')
-    cursor.execute('TRUNCATE TABLE lists')
     for item in data:
       cursor.execute(
         '''
