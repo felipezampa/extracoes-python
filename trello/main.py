@@ -19,19 +19,19 @@ engine = pg.connect(
 )
 
 try:
-  # members.extract_members(token, key, organization, engine)
-  # boards.extract_boards(token, key, organization, engine)
-  # boards.extract_boards_members(token,key,organization,engine)
+  members.extract_members(token, key, organization, engine)
+  boards.extract_boards(token, key, organization, engine)
+  boards.extract_boards_members(token,key,organization,engine)
   
-  # boards_trello = boards.get_all_boards(engine)
+  boards_trello = boards.get_all_boards(engine)
 
-  # lists.extract_lists(token, key, engine, boards_trello)
-  # cards.extract_cards(token, key, engine, boards_trello)
-  # cards.extract_cards_checklists(token, key, engine, boards_trello)
-  # cards.extract_cards_labels(token, key, engine, boards_trello)
-  # labels.extract_labels(token, key, engine, boards_trello)
-  # checklists.extract_checklists(token, key, engine, boards_trello)
-  # checklists.extract_checklists_items(token, key, engine, boards_trello)
+  lists.extract_lists(token, key, engine, boards_trello)
+  cards.extract_cards(token, key, engine, boards_trello)
+  cards.extract_cards_checklists(token, key, engine, boards_trello)
+  cards.extract_cards_labels(token, key, engine, boards_trello)
+  labels.extract_labels(token, key, engine, boards_trello)
+  checklists.extract_checklists(token, key, engine, boards_trello)
+  checklists.extract_checklists_items(token, key, engine, boards_trello)
 
   facts.fact_cards(engine)
 except Exception as e:

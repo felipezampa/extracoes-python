@@ -27,7 +27,7 @@ SELECT DISTINCT
 	l.nome AS list,
 	c.id AS card_id,
 	c.nome AS card, 
-	c.descricao,
+  left(c.descricao,150) as descricao,
 	c.dt_inicio, 
 	c.dt_entrega, 
 	c.terminado,

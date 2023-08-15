@@ -1,5 +1,6 @@
 import os
-import pandas as pd
+import boto3
+import csv
 from dotenv import load_dotenv
 import psycopg2 as pg 
 
@@ -34,6 +35,7 @@ def fact_cards(engine):
               status_card TEXT
           );
       ''')
+      cursor.execute('TRUNCATE TABLE fact_cards')
       engine.commit()
       # Executa o script SQL
       cursor.execute(query)
@@ -58,77 +60,94 @@ def fact_cards(engine):
           cursor.execute(insert_query_template, insert_values)
 
       engine.commit()
-      pg_to_redshift(redshift_engine, engine)
+
+      extract_data_to_csv(cursor)
+      upload_csv_to_s3()
+      copy_s3_to_redshift()
+  cursor.close()
   engine.close()
+  
+def extract_data_to_csv(cursor):
+    '''
+    Extrai uma certa tabela do BD e transforma ela em um arquivo CSV
+    '''
+    source_table = 'fact_cards'
+
+    # Obtém o caminho completo para o arquivo de saída
+    csv_file_path = os.path.join(os.path.dirname(__file__), "csv", f'{source_table}.csv')
+
+    # Remove o arquivo CSV se ele já existe
+    if os.path.exists(csv_file_path):
+        os.remove(csv_file_path)
+
+    # Escreve no arquivo CSV os valores da tabela
+    with open(csv_file_path, 'w', newline='', encoding='utf-8') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
 
+        cursor.execute(f"SELECT * FROM {source_table}")
+        column_names = [desc[0] for desc in cursor.description]
+        csv_writer.writerow(column_names)
 
+        for row in cursor:
+            csv_writer.writerow(row)
 
-# def table_to_csv(engine):
+# Function to upload the CSV file to Amazon S3
+def upload_csv_to_s3():
+  # Obtém o caminho completo para o diretório "csv"
+  csv_directory = os.path.join(os.path.dirname(__file__), "csv")
 
-  with engine.cursor() as cursor:
-      # Executa a consulta SQL para buscar os dados da tabela
-      query = "SELECT * FROM fact_cards;"
-      cursor.execute(query)
+  aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
+  aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+  # Conecta-se ao serviço S3
+  s3 = boto3.client('s3',aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key)
 
-      # Recupera os dados da consulta
-      data = cursor.fetchall()
+  # Especifica o nome do bucket e o caminho para o arquivo no S3
+  s3_bucket = os.getenv("REDSHIFT_BUCKET")
+  s3_key = 'trello/fact_cards.csv'
 
-  # Cria um DataFrame do pandas com os dados
-  columns = [
-      "board_id", "board", "list", "card_id", "card",
-      "descricao", "dt_inicio", "dt_entrega", "terminado",
-      "unidade_negocio", "fora_escopo", "acao_cliente", "status_card"
-  ]
-  df = pd.DataFrame(data, columns=columns)
+  # Caminho local do arquivo CSV
+  local_file_path = os.path.join(csv_directory, 'fact_cards.csv')
 
-  # Obtém o caminho completo para o arquivo de saída
-  output_path = os.path.join(os.path.dirname(__file__), "csv", 'fact_cards.csv')
+  # Faz o upload do arquivo para o S3
+  s3.upload_file(local_file_path, s3_bucket, s3_key)
 
-  # Remove o arquivo CSV se ele já existe
-  if os.path.exists(output_path):
-      os.remove(output_path)
+def copy_s3_to_redshift(): 
+    # Parâmetros de conexão com o Redshift
+    redshift_params = {
+        "dbname": os.getenv("REDSHIFT_DBNAME"),
+        "user": os.getenv("REDSHIFT_USER"),
+        "password": os.getenv("REDSHIFT_PASSWORD"),
+        "host": os.getenv("REDSHIFT_HOST"),
+        "port": os.getenv("REDSHIFT_PORT")
+    }
 
-  # Cria o diretório se ele não existir
-  os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    # Parâmetros do S3
+    s3_bucket = os.getenv("REDSHIFT_BUCKET")
+    s3_key = 'trello/fact_cards.csv'
 
-  # Exporta o DataFrame para um arquivo CSV
-  df.to_csv(output_path, index=False, encoding='utf-8',sep='"')
-
-# def csv_to_s3:
-
-def pg_to_redshift(redshift_engine, postgres_engine): 
-    postgres_cursor = postgres_engine.cursor()
-    redshift_cursor = redshift_engine.cursor()
-
-    postgres_cursor.execute('SELECT * FROM fact_cards')
-    result = postgres_cursor.fetchall()
-
-    # Define o comando INSERT para o Redshift
-    insert_query = """
-        INSERT INTO fact_trello (
-            board_id, board, list, card_id, card,
-            descricao, dt_inicio, dt_entrega, terminado,
-            unidade_negocio, fora_escopo, acao_cliente, status_card
-        )
-        VALUES (
-            %s, %s, %s, %s, %s,
-            %s, %s, %s, %s,
-            %s, %s, %s, %s
-        )
+    # Nome da tabela no Redshift
+    redshift_table = "fact_trello"
+    
+    # Criação da conexão com o Redshift
+    redshift_conn = pg.connect(**redshift_params)
+    
+    # Criação do cursor
+    cursor = redshift_conn.cursor()
+    
+    # Instrução COPY para carregar dados do S3 para o Redshift
+    copy_query = f"""
+    COPY {redshift_table}
+    FROM 's3://{s3_bucket}/{s3_key}'
+    CREDENTIALS 'aws_access_key_id={os.getenv("AWS_ACCESS_KEY_ID")};aws_secret_access_key={os.getenv("AWS_SECRET_ACCESS_KEY")}'
+    CSV DELIMITER ';'
+    IGNOREHEADER 1;
     """
-
-    # Itera sobre os resultados e executa a inserção no Redshift
-    for row in result:
-        try:
-            redshift_cursor.execute(insert_query, row)
-        except Exception as e:
-            print("Erro ao inserir linha:")
-            print(row)
-            print("Erro:", e)
-
-    # Confirma as transações no Redshift
-    redshift_engine.commit()
-
-    redshift_cursor.close()
-
+    
+    # Executa a instrução COPY
+    cursor.execute(copy_query)
+    
+    # Commit e fechamento
+    redshift_conn.commit()
+    cursor.close()
+    redshift_conn.close()
