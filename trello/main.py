@@ -2,7 +2,7 @@ import psycopg2 as pg
 import os
 from dotenv import load_dotenv
 import datetime
-import members, labels, boards, lists, cards, checklists,facts
+import members, labels, boards, lists, cards, checklists, facts
 
 
 # Tempo do inicio da execução
@@ -40,6 +40,7 @@ except Exception as e:
 finally:
   print('-----------------  FIM  ------------------')
   engine.close()
+  
 # Tempo do fim da execução
 end_time = datetime.datetime.now()
 # Calcula o tempo de execução

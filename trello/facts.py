@@ -4,22 +4,26 @@ import csv
 from dotenv import load_dotenv
 import psycopg2 as pg 
 
-load_dotenv()
-# Conecta no redshift
-redshift_engine = pg.connect(
-    dbname=os.getenv("REDSHIFT_DBNAME"), user=os.getenv("REDSHIFT_USER"), host=os.getenv("REDSHIFT_HOST"), port=os.getenv("REDSHIFT_PORT"), password=os.getenv("REDSHIFT_PASSWORD")
-)
 
 def fact_cards(engine):
+  """
+    Executa o script fact_cards.sql e insere ele uma tabela do PostgreSQL.
+    Após isso chama os métodos `extract_data_to_csv(cursor)`, `upload_csv_to_s3()` e `copy_s3_to_redshift()` para inserir a tabela no Redshift.
+      
+    `engine: Conexão ao banco de dados PostgreSQL.`
+  """
+  load_dotenv()
+  tabela = 'fact_cards'
+  # Caminho do arquivo contendo o script SQL
   script_path = os.path.join(os.path.dirname(__file__), 'sql/fact_cards.sql')
-
+  # Leitura do script SQL
   with open(script_path, 'r', encoding='utf-8') as file:
       query = file.read()
 
-
+  # Criação da tabela
   with engine.cursor() as cursor:
-      cursor.execute('''
-          CREATE TABLE IF NOT EXISTS fact_cards (
+      cursor.execute(f'''
+          CREATE TABLE IF NOT EXISTS {tabela} (
               board_id TEXT,
               board TEXT,
               list TEXT,
@@ -35,15 +39,15 @@ def fact_cards(engine):
               status_card TEXT
           );
       ''')
-      cursor.execute('TRUNCATE TABLE fact_cards')
+      cursor.execute(f'TRUNCATE TABLE {tabela}')
       engine.commit()
       # Executa o script SQL
       cursor.execute(query)
 
-      # Itera sobre os resultados e executa a inserção
+      # Itera sobre os resultados e executa a inserção na tabela
       for row in cursor.fetchall():
-          insert_query_template = """
-              INSERT INTO fact_cards (
+          insert_query_template = f"""
+              INSERT INTO {tabela} (
                   board_id, board, list, card_id, card,
                   descricao, dt_inicio, dt_entrega, terminado,
                   unidade_negocio, fora_escopo, acao_cliente, status_card
@@ -61,20 +65,20 @@ def fact_cards(engine):
 
       engine.commit()
 
+      # Chama as funções necessárias para fazer a inserção dos dados no Redshift
       extract_data_to_csv(cursor)
       upload_csv_to_s3()
       copy_s3_to_redshift()
   cursor.close()
-  engine.close()
   
 def extract_data_to_csv(cursor):
     '''
-    Extrai uma certa tabela do BD e transforma ela em um arquivo CSV
+    Extrai uma tabela do BD e transforma ela em um arquivo CSV
     '''
-    source_table = 'fact_cards'
+    tabela = 'fact_cards'
 
     # Obtém o caminho completo para o arquivo de saída
-    csv_file_path = os.path.join(os.path.dirname(__file__), "csv", f'{source_table}.csv')
+    csv_file_path = os.path.join(os.path.dirname(__file__), "csv", f'{tabela}.csv')
 
     # Remove o arquivo CSV se ele já existe
     if os.path.exists(csv_file_path):
@@ -84,19 +88,20 @@ def extract_data_to_csv(cursor):
     with open(csv_file_path, 'w', newline='', encoding='utf-8') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-
-        cursor.execute(f"SELECT * FROM {source_table}")
+        cursor.execute(f"SELECT * FROM {tabela}")
         column_names = [desc[0] for desc in cursor.description]
         csv_writer.writerow(column_names)
 
         for row in cursor:
             csv_writer.writerow(row)
 
-# Function to upload the CSV file to Amazon S3
 def upload_csv_to_s3():
+  '''
+    Faz o upload de um arquivo CSV para o Amazon S3
+  '''
   # Obtém o caminho completo para o diretório "csv"
   csv_directory = os.path.join(os.path.dirname(__file__), "csv")
-
+  # Chaves de acesso ao AWS
   aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
   aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
   # Conecta-se ao serviço S3
@@ -113,6 +118,9 @@ def upload_csv_to_s3():
   s3.upload_file(local_file_path, s3_bucket, s3_key)
 
 def copy_s3_to_redshift(): 
+    '''
+      Copia um arquivo s3 para uma tabela do Redshift
+    '''
     # Parâmetros de conexão com o Redshift
     redshift_params = {
         "dbname": os.getenv("REDSHIFT_DBNAME"),

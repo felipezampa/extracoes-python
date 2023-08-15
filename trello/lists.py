@@ -1,20 +1,32 @@
 import requests
 
 def extract_lists(token,key,engine,idBoards):
+  """
+    Extrai informações de listas (lists) do Trello e
+    insere essas informações em uma tabela do PostgreSQL.
+
+    `token: Token de autenticação do Trello.`
+    `key: Chave de API do Trello.`
+    `engine: Conexão ao banco de dados PostgreSQL.`
+    `idBoards: Lista de IDs dos quadros do Trello.`
+  """
+  tabela='lists'
   print('------------------------------------------')
-  print('extract_lists -> Inicio da leitura da URL')
+  print(f'{tabela} -> Inicio da leitura da URL')
+  # Cria um cursor para executar as consultas SQL
   cursor = engine.cursor()
 
   # Cria a tabela se ela ainda não existir
-  cursor.execute('''
-      CREATE TABLE IF NOT EXISTS public.lists (
+  cursor.execute(f'''
+      CREATE TABLE IF NOT EXISTS public.{tabela} (
         id text,
         nome text,
         fechado boolean,
         id_board text
       );
   ''')
-  cursor.execute('TRUNCATE TABLE lists')
+  cursor.execute(f'TRUNCATE TABLE {tabela}')
+
   # Loop para fazer as requests de vários boards, o id é o objeto e o index é a posição no array
   for index, id in enumerate(idBoards):
     url = 'https://api.trello.com/1/boards/{}/lists?key={}&token={}'.format(id, key, token)
@@ -23,14 +35,13 @@ def extract_lists(token,key,engine,idBoards):
     response = requests.get(url)
     # Converte a resposta para um objeto JSON
     data = response.json() 
-    # Cria um cursor para executar as consultas SQL
-    
+
     # Insere os dados na tabela
-    print('extract_lists -> idBoard: ' + str(index) + ' - Inserção dos dados')
+    print(f'{tabela} -> idBoard: ' + str(index) + ' - Inserção dos dados')
     for item in data:
       cursor.execute(
-        '''
-            INSERT INTO lists (id, nome, fechado, id_board)
+        f'''
+            INSERT INTO {tabela} (id, nome, fechado, id_board)
             VALUES (%s, %s, %s, %s)
         ''', 
         (item['id'], item['name'], item['closed'], item['idBoard'])
@@ -39,5 +50,5 @@ def extract_lists(token,key,engine,idBoards):
   # Confirma as alterações no banco de dados e fecha o cursor
   engine.commit()
   cursor.close()
-  print('extract_lists -> Extração concluída com sucesso!')
+  print(f'{tabela} -> Extração concluída com sucesso!')
   
