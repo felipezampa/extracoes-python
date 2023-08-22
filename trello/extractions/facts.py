@@ -14,8 +14,13 @@ def fact_cards(engine):
   """
   load_dotenv()
   tabela = 'fact_cards'
-  # Caminho do arquivo contendo o script SQL
-  script_path = os.path.join(os.path.dirname(__file__), 'sql/fact_cards.sql')
+  print('------------------------------------------')
+  print(f'{tabela} -> Inicio da leitura do script')
+  # Obtém o diretório atual em que o script está sendo executado
+  current_directory = os.path.dirname(os.path.abspath(__file__))
+  # Navega para o diretório 'sql' a partir do diretório atual
+  script_path = os.path.abspath(os.path.join(current_directory, '..', f'sql/{tabela}.sql'))
+
   # Leitura do script SQL
   with open(script_path, 'r', encoding='utf-8') as file:
       query = file.read()
@@ -66,19 +71,23 @@ def fact_cards(engine):
       engine.commit()
 
       # Chama as funções necessárias para fazer a inserção dos dados no Redshift
-      extract_data_to_csv(cursor)
-      upload_csv_to_s3()
+      print(f'{tabela} -> Extração de dados SQL para um arquivo CSV')
+      extract_data_to_csv(cursor,tabela)
+      print(f'{tabela} -> Extração de dados CSV para um arquivo S3(AWS)')
+      upload_csv_to_s3(tabela)
+      print(f'{tabela} -> Copiando dados do arquivo S3 para a tabela do redshift')
       copy_s3_to_redshift()
   cursor.close()
   
-def extract_data_to_csv(cursor):
+def extract_data_to_csv(cursor,tabela):
     '''
     Extrai uma tabela do BD e transforma ela em um arquivo CSV
     '''
-    tabela = 'fact_cards'
-
-    # Obtém o caminho completo para o arquivo de saída
-    csv_file_path = os.path.join(os.path.dirname(__file__), "csv", f'{tabela}.csv')
+    
+    # Obtém o diretório atual em que o script está sendo executado
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    # Navega para o diretório csv a partir do diretório atual
+    csv_file_path = os.path.abspath(os.path.join(current_directory, '..', f'csv/{tabela}.csv'))
 
     # Remove o arquivo CSV se ele já existe
     if os.path.exists(csv_file_path):
@@ -95,12 +104,14 @@ def extract_data_to_csv(cursor):
         for row in cursor:
             csv_writer.writerow(row)
 
-def upload_csv_to_s3():
+def upload_csv_to_s3(tabela):
   '''
     Faz o upload de um arquivo CSV para o Amazon S3
   '''
-  # Obtém o caminho completo para o diretório "csv"
-  csv_directory = os.path.join(os.path.dirname(__file__), "csv")
+  # Obtém o diretório atual em que o script está sendo executado
+  current_directory = os.path.dirname(os.path.abspath(__file__))
+  # Navega para o diretório csv a partir do diretório atual
+  csv_directory = os.path.abspath(os.path.join(current_directory, '..', f'csv/{tabela}.csv'))
   # Chaves de acesso ao AWS
   aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
   aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -111,11 +122,9 @@ def upload_csv_to_s3():
   s3_bucket = os.getenv("REDSHIFT_BUCKET")
   s3_key = 'trello/fact_cards.csv'
 
-  # Caminho local do arquivo CSV
-  local_file_path = os.path.join(csv_directory, 'fact_cards.csv')
 
   # Faz o upload do arquivo para o S3
-  s3.upload_file(local_file_path, s3_bucket, s3_key)
+  s3.upload_file(csv_directory, s3_bucket, s3_key)
 
 def copy_s3_to_redshift(): 
     '''

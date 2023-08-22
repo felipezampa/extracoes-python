@@ -2,7 +2,7 @@ import psycopg2 as pg
 import os
 from dotenv import load_dotenv
 import datetime
-import members, labels, boards, lists, cards, checklists, facts
+from extractions import members, labels, boards, lists, cards, checklists, facts
 
 
 # Tempo do inicio da execução
