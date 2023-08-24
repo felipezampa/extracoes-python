@@ -2,7 +2,8 @@ import psycopg2 as pg
 import os
 from dotenv import load_dotenv
 import datetime
-from extractions import members, labels, boards, lists, cards, checklists, facts
+from extractions import members, labels, boards, lists, cards, checklists
+from dim_facts import fact_trello, fact_checklists, dim_boards, dim_cards, dim_lists 
 
 
 # Tempo do inicio da execução
@@ -33,7 +34,13 @@ try:
   checklists.extract_checklists(token, key, engine, boards_trello)
   checklists.extract_checklists_items(token, key, engine, boards_trello)
 
-  facts.fact_cards(engine)
+  # Extrações em tabelas fato para copiar ao redshift
+  fact_trello.extract(engine)
+  fact_checklists.extract(engine)
+  dim_boards.extract(engine)
+  dim_cards.extract(engine)
+  dim_lists.extract(engine) 
+
 except Exception as e:
   print('-----------------  ERRO  -----------------')
   print(e)

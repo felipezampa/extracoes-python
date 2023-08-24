@@ -1,3 +1,4 @@
+
 WITH cte_bu AS(
     SELECT *,
         CASE  
@@ -23,30 +24,27 @@ cte_status AS(
 )
 SELECT DISTINCT 
 	b.id AS board_id,
-	upper(b.nome) AS board,
-	l.nome AS list,
+	l.id AS list_id,
 	c.id AS card_id,
-	c.nome AS card, 
-  left(c.descricao,150) as descricao,
 	c.dt_inicio, 
 	c.dt_entrega, 
 	c.terminado,
-    CASE
-        WHEN bool_or(lb.nome IN ('Turnaround','Gestão de Turnaround','Controladoria','RJ','BI','Safegold BI','Industrial','Apoio Industrial')) THEN MAX(cte_bu.unidade_negocio)
-        ELSE 'BU NAO IDENTIFICADA'
-    END AS unidade_negocio,
-    CASE
-        WHEN bool_or(lb.nome IN ('Fora do Escopo','Escopo Adicional - Não Contratado','Fora do escopo')) THEN TRUE
-        ELSE FALSE
-    END AS fora_escopo,
-    CASE
-        WHEN bool_or(lb.nome IN ('Cliente')) THEN TRUE
-        ELSE FALSE
-    END AS acao_cliente,
-    CASE
-        WHEN bool_or(lb.nome IN ('Não iniciado','Não Iniciada','Concluídos','Concluído','Pronto')) THEN MAX(cte_status.status_card)
-        ELSE 'EM EXECUÇÃO'
-    END AS status_card
+  CASE
+      WHEN bool_or(lb.nome IN ('Turnaround','Gestão de Turnaround','Controladoria','RJ','BI','Safegold BI','Industrial','Apoio Industrial')) THEN MAX(cte_bu.unidade_negocio)
+      ELSE 'BU NAO IDENTIFICADA'
+  END AS unidade_negocio,
+  CASE
+      WHEN bool_or(lb.nome IN ('Fora do Escopo','Escopo Adicional - Não Contratado','Fora do escopo')) THEN TRUE
+      ELSE FALSE
+  END AS fora_escopo,
+  CASE
+      WHEN bool_or(lb.nome IN ('Cliente')) THEN TRUE
+      ELSE FALSE
+  END AS acao_cliente,
+  CASE
+      WHEN bool_or(lb.nome IN ('Não iniciado','Não Iniciada','Concluídos','Concluído','Pronto')) THEN MAX(cte_status.status_card)
+      ELSE 'EM EXECUÇÃO'
+  END AS status_card
 FROM cards c
 	LEFT JOIN boards b ON c.id_board = b.id 
 	LEFT JOIN lists l ON c.id_list = l.id 
@@ -55,4 +53,4 @@ FROM cards c
 	LEFT JOIN cte_bu ON lb.id = cte_bu.id
 	LEFT JOIN cte_status ON lb.id = cte_status.id
 GROUP BY 
-    b.id, b.nome, l.nome, c.id, c.nome, c.descricao, c.dt_inicio, c.dt_entrega, c.terminado
+    b.id, l.id, c.id, c.descricao, c.dt_inicio, c.dt_entrega, c.terminado
