@@ -109,8 +109,12 @@ def get_all_boards(engine):
 
     `engine: Conexão ao banco de dados PostgreSQL.`
   """
+  print('Limpando dados dos boards')
   cursor = engine.cursor()
-  cursor.execute('SELECT id FROM boards')
+  cursor.execute('''
+                 call public.clean_boards();
+                 SELECT id FROM boards
+                 ''')
   # A função fetchall() é usada para recuperar todas as linhas retornadas pela consulta
   results = cursor.fetchall()
   idBoards = [row[0] for row in results]

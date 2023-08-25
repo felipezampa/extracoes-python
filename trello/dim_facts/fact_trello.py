@@ -27,12 +27,9 @@ def extract(engine):
   with engine.cursor() as cursor:
       cursor.execute(f'''
           CREATE TABLE IF NOT EXISTS {tabela} (
-            board_id TEXT NULL,
-            list_id TEXT NULL,
             card_id TEXT NULL,
             dt_inicio TIMESTAMP NULL,
             dt_entrega TIMESTAMP NULL,
-            terminado BOOLEAN NULL,
             unidade_negocio TEXT NULL,
             fora_escopo BOOLEAN NULL,
             acao_cliente BOOLEAN NULL,
@@ -48,13 +45,13 @@ def extract(engine):
       for row in cursor.fetchall():
           insert_query_template = f"""
               INSERT INTO {tabela} (
-                  board_id, card_id, list_id, dt_inicio, dt_entrega, terminado, unidade_negocio, fora_escopo, acao_cliente, status_card
+                  card_id, dt_inicio, dt_entrega, unidade_negocio, fora_escopo, acao_cliente, status_card
               ) VALUES (
-                  %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                  %s, %s, %s, %s, %s, %s, %s
               );
           """
           insert_values = (
-              row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]
+              row[0], row[1], row[2], row[3], row[4], row[5], row[6]
           )
           cursor.execute(insert_query_template, insert_values)
 

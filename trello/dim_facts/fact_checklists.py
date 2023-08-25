@@ -27,7 +27,6 @@ def extract(engine):
   with engine.cursor() as cursor:
       cursor.execute(f'''
           CREATE TABLE IF NOT EXISTS {tabela} (
-            board_id TEXT NULL,
             card_id TEXT NULL,
             usuario TEXT NULL,
             checklist TEXT NULL,
@@ -45,13 +44,13 @@ def extract(engine):
       for row in cursor.fetchall():
           insert_query_template = f"""
               INSERT INTO {tabela} (
-                  board_id, card_id, usuario, checklist, item, dt_entrega, terminado
+                  card_id, usuario, checklist, item, dt_entrega, terminado
               ) VALUES (
-                  %s, %s, %s, %s, %s, %s, %s
+                  %s, %s, %s, %s, %s, %s
               );
           """
           insert_values = (
-              row[0], row[1], row[2], row[3], row[4], row[5], row[6]
+              row[0], row[1], row[2], row[3], row[4], row[5]
           )
           cursor.execute(insert_query_template, insert_values)
 

@@ -33,6 +33,7 @@ try:
   labels.extract_labels(token, key, engine, boards_trello)
   checklists.extract_checklists(token, key, engine, boards_trello)
   checklists.extract_checklists_items(token, key, engine, boards_trello)
+  cards.clean_cards(engine)
 
   # Extrações em tabelas fato para copiar ao redshift
   fact_trello.extract(engine)

@@ -163,3 +163,13 @@ def extract_cards_checklists(token,key,engine,idBoards):
   engine.commit()
   cursor.close()
   print(f'{tabela} -> Extração concluída com sucesso!')
+
+def clean_cards(engine):
+  """
+     Chama a procedure clean_cards() para tratar dados indesejados.
+    `engine: Conexão ao banco de dados PostgreSQL.`
+  """
+  print('Limpando dados dos cards e labels')
+  cursor = engine.cursor()
+  cursor.execute('call public.clean_cards()')
+  cursor.close()
