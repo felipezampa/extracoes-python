@@ -75,6 +75,7 @@ def copy_s3_to_redshift(tabela):
     
     # Instrução COPY para carregar dados do S3 para o Redshift
     copy_query = f"""
+    DELETE FROM trello_{tabela};
     COPY trello_{tabela}
     FROM 's3://{s3_bucket}/{s3_key}'
     CREDENTIALS 'aws_access_key_id={os.getenv("AWS_ACCESS_KEY_ID")};aws_secret_access_key={os.getenv("AWS_SECRET_ACCESS_KEY")}'
