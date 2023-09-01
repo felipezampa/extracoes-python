@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 import datetime
 from extractions import members, labels, boards, lists, cards, checklists
-from dim_facts import fact_trello, fact_checklists, dim_boards, dim_cards, dim_lists 
+from dim_facts import fact_trello, fact_checklists, fact_overviews, dim_boards, dim_cards, dim_lists 
 
 
 # Tempo do inicio da execução
@@ -38,6 +38,7 @@ try:
   # Extrações em tabelas fato para copiar ao redshift
   fact_trello.extract(engine)
   fact_checklists.extract(engine)
+  fact_overviews.extract(engine)
   dim_boards.extract(engine)
   dim_cards.extract(engine)
   dim_lists.extract(engine) 
